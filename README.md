@@ -1,8 +1,8 @@
-# 🌠 AstroTrails Pro Studio
+# 🌠 AstroTrails
 
-> Мощный и автономный веб-редактор для создания фотографий звездных треков в режиме «Кометы» (Comet Mode) прямо из ваших таймлапс-видео.
+> Автономный веб-редактор для создания фотографий звездных треков в режиме «Кометы» (Comet Mode) прямо из ваших таймлапс-видео.
 
-### 🔗 [Запустить AstroTrails Pro Studio в браузере (GitHub Pages)](https://na1x-dev.github.io/AstroTrails/)
+### 🔗 [Запустить AstroTrails в браузере (GitHub Pages)](https://na1x-dev.github.io/AstroTrails/)
 
 ---
 
