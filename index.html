@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AstroTrails</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="editor-layout">
+    <!-- Панель инструментов -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="favicon.png" alt="Logo" class="app-logo-img" onerror="this.style.display='none'; document.getElementById('fallbackLogo').style.display='block';">
+            <div>
+                <h2>AstroTrails</h2>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- Секция 1: Управление файлом -->
+            <div class="section-card">
+                <div class="section-title">Файл</div>
+                <button class="btn btn-tonal" id="uploadBtnClick">
+                    <i class="fa-solid fa-folder-open"></i>
+                    Открыть видео...
+                </button>
+                <input type="file" id="videoInput" accept="video/*" style="display: none;">
+                <div id="fileInfoText">Файл не выбран</div>
+            </div>
+
+            <!-- Секция 2: Алгоритм треков -->
+            <div class="section-card disabled-control" id="secTracks">
+                <div class="section-title">Настройки трасс</div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Прозрачность хвоста</span>
+                        <span class="val" id="opacityVal">20%</span>
+                    </div>
+                    <input type="range" id="startOpacity" min="1" max="99" value="20" disabled>
+                </div>
+                <button class="btn btn-primary" id="processBtn" disabled>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Сгенерировать треки
+                </button>
+            </div>
+
+            <!-- Секция 3: Цветокоррекция -->
+            <div class="section-card disabled-control" id="secEffects">
+                <div class="section-title">Постобработка кадра (GPU)</div>
+                
+                <div class="slider-group">
+                    <div class="slider-header"><span>Яркость</span><span class="val" id="brightnessVal">100%</span></div>
+                    <input type="range" id="brightness" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header"><span>Контрастность</span><span class="val" id="contrastVal">100%</span></div>
+                    <input type="range" id="contrast" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header"><span>Гамма</span><span class="val" id="gammaVal">1.0</span></div>
+                    <input type="range" id="gamma" min="20" max="250" value="100" disabled>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="slider-group rgb-slider r-slider">
+                    <div class="slider-header"><span>Красный канал (R)</span><span class="val" id="channelRVal">100%</span></div>
+                    <input type="range" id="channelR" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="slider-group rgb-slider g-slider">
+                    <div class="slider-header"><span>Зеленый канал (G)</span><span class="val" id="channelGVal">100%</span></div>
+                    <input type="range" id="channelG" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="slider-group rgb-slider b-slider">
+                    <div class="slider-header"><span>Синий канал (B)</span><span class="val" id="channelBVal">100%</span></div>
+                    <input type="range" id="channelB" min="0" max="200" value="100" disabled>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-tonal" id="resetBtn" disabled style="margin-bottom: 8px;">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+                Сбросить настройки
+            </button>
+            <button class="btn btn-primary" id="downloadBtn" disabled>
+                <i class="fa-solid fa-download"></i>
+                Экспорт в PNG
+            </button>
+        </div>
+    </aside>
+
+    <!-- Центральная область просмотра -->
+    <main class="viewport" id="dropZone">
+        <div class="canvas-container">
+            <canvas id="outputCanvas" style="display:none;"></canvas>
+            <canvas id="glCanvas"></canvas>
+            
+            <div class="viewport-overlay" id="statusOverlay">
+                <div class="loader-spinner" id="loaderSpinner"></div>
+                <i class="fa-solid fa-cloud-moon overlay-icon" id="statusIcon"></i>
+                <div class="status-title" id="statusTitle">Пустой холст</div>
+                <div class="status-desc" id="statusText">Перетащите видео в центр экрана или используйте кнопку меню. На мобильных — просто тапните по кнопке «Открыть видео».</div>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+<script src="effects.js"></script>
+</body>
+</html>
