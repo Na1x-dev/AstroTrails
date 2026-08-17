@@ -9,29 +9,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cloudflare.com">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.png" type="image/x-icon">
+
 </head>
 <body>
 
 <div class="editor-layout">
-    <!-- Панель инструментов -->
+    <!-- Левая панель инструментов -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <img src="favicon.png" alt="Logo" class="app-logo-img" onerror="this.style.display='none'; document.getElementById('fallbackLogo').style.display='block';">
+            <i class="fa-solid fa-meteor logo-icon" id="fallbackLogo" style="display:none;"></i>
             <div>
                 <h2>AstroTrails</h2>
             </div>
         </div>
 
         <div class="sidebar-content">
-            <!-- Секция 1: Управление файлом -->
+            <!-- Краткий туториал -->
+            <div class="tutorial-card" id="tutorialBlock">
+                <div class="tutorial-header">
+                    <span><i class="fa-solid fa-circle-info"></i> Как пользоваться?</span>
+                    <button id="closeTutorialBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <ol class="tutorial-steps">
+                    <li>Загрузите **одно или несколько** видео-таймлапсов звездного неба.</li>
+                    <li>Нажмите **«Сгенерировать треки»**.</li>
+                    <li>Используйте ползунки **Постобработки**, чтобы сделать небо темнее, а звёзды ярче.</li>
+                </ol>
+            </div>
+
+            <!-- Секция 1: Управление файлами -->
             <div class="section-card">
-                <div class="section-title">Файл</div>
+                <div class="section-title">Импорт медиа</div>
                 <button class="btn btn-tonal" id="uploadBtnClick">
-                    <i class="fa-solid fa-folder-open"></i>
-                    Открыть видео...
+                    <i class="fa-solid fa-images"></i>
+                    Выбрать видеоролики...
                 </button>
-                <input type="file" id="videoInput" accept="video/*" style="display: none;">
-                <div id="fileInfoText">Файл не выбран</div>
+                <!-- Добавлен атрибут multiple -->
+                <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
+                <div id="fileInfoText">Файлы не выбраны</div>
             </div>
 
             <!-- Секция 2: Алгоритм треков -->
@@ -93,6 +110,10 @@
                 <i class="fa-solid fa-arrow-rotate-left"></i>
                 Сбросить настройки
             </button>
+            <button class="btn btn-tonal" id="downloadVideoBtn" disabled style="margin-bottom: 8px; display: none;">
+                <i class="fa-solid fa-video"></i>
+                Экспорт видео (MP4)
+            </button>
             <button class="btn btn-primary" id="downloadBtn" disabled>
                 <i class="fa-solid fa-download"></i>
                 Экспорт в PNG
@@ -110,7 +131,7 @@
                 <div class="loader-spinner" id="loaderSpinner"></div>
                 <i class="fa-solid fa-cloud-moon overlay-icon" id="statusIcon"></i>
                 <div class="status-title" id="statusTitle">Пустой холст</div>
-                <div class="status-desc" id="statusText">Перетащите видео в центр экрана или используйте кнопку меню. На мобильных — просто тапните по кнопке «Открыть видео».</div>
+                <div class="status-desc" id="statusText">Перетащите пачку мини-таймлапсов прямо сюда в центр экрана.</div>
                 
                 <div class="progress-container" id="progressContainer">
                     <div class="progress-bar" id="progressBar"></div>
@@ -122,5 +143,6 @@
 
 <script src="script.js"></script>
 <script src="effects.js"></script>
+<script src="loader.js"></script>
 </body>
 </html>
