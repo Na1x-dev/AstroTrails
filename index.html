@@ -124,6 +124,10 @@
     <!-- Центральная область просмотра -->
     <main class="viewport" id="dropZone">
         <div class="canvas-container">
+            <div class="tail-regenerate-notice hidden" id="tailRegenerateNotice" role="status" aria-live="polite">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                <span>Длина хвоста изменена. Перегенерируйте треки, чтобы применить новое значение.</span>
+            </div>
             <canvas id="outputCanvas" style="display:none;"></canvas>
             <canvas id="glCanvas"></canvas>
             
