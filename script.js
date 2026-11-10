@@ -137,6 +137,7 @@ function handleFiles(fileList) {
     window.astroState.generatedOpacity = null;
 
     window.astroState.videoFiles = filesArray;
+    document.getElementById('tailRegenerateNotice').classList.add('hidden');
     window.astroState.rawCompositeBuffer = null;
     window.astroState.previewBuffer = null;
     downloadBtn.disabled = true;
