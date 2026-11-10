@@ -119,6 +119,7 @@ function finalizeVideoComposite(canvas) {
     document.getElementById('downloadBtn').disabled = false;
     document.getElementById('resetBtn').disabled = false;
     document.getElementById('processBtn').disabled = false;
+    window.astroState.generatedOpacity = Number(document.getElementById('startOpacity').value);
     document.getElementById('processBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
 }
 
@@ -141,8 +142,12 @@ document.getElementById('processBtn').addEventListener('click', async () => {
     message.textContent = 'Проверяем длительность и параметры клипов…';
 
     window.astroState.cachedFrames = [];
-    window.astroState.rawCompositeBuffer = null;
-    window.astroState.previewBuffer = null;
+    // Храним последний успешный результат до завершения новой генерации.
+    const previousResult = {
+        raw: window.astroState.rawCompositeBuffer,
+        preview: window.astroState.previewBuffer,
+        opacity: window.astroState.generatedOpacity
+    };
     const videos = [];
     const urls = [];
     try {
@@ -205,6 +210,14 @@ document.getElementById('processBtn').addEventListener('click', async () => {
         spinner.style.display = 'none';
         overlay.classList.remove('hidden');
         if (window.toggleUIBlock) window.toggleUIBlock(false);
+        if (previousResult.raw && previousResult.preview) {
+            window.astroState.rawCompositeBuffer = previousResult.raw;
+            window.astroState.previewBuffer = previousResult.preview;
+            window.astroState.generatedOpacity = previousResult.opacity;
+            if (window.applyPostProcessing) window.applyPostProcessing();
+            document.getElementById('downloadBtn').disabled = false;
+            overlay.classList.add('hidden');
+        }
         document.getElementById('processBtn').disabled = false;
     } finally {
         videos.forEach(video => {
