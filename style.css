@@ -306,3 +306,43 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; background: v
     .sidebar-content { padding: 10px; }
     .section-card { padding: 14px; }
 }
+
+
+/* Material 3 inline status notice for unapplied tail settings */
+.tail-regenerate-notice {
+    position: absolute;
+    z-index: 5;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(560px, calc(100% - 32px));
+    padding: 13px 18px;
+    border: 1px solid rgba(168, 199, 250, .28);
+    border-radius: 16px;
+    background: #263448;
+    color: #e3edff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .24);
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 500;
+    pointer-events: none;
+}
+.tail-regenerate-notice i {
+    flex: 0 0 auto;
+    color: #a8c7fa;
+    font-size: 17px;
+}
+.tail-regenerate-notice.hidden { display: none; }
+.canvas-container { position: relative; }
+@media (max-width: 768px) {
+    .tail-regenerate-notice {
+        top: 10px;
+        width: calc(100% - 20px);
+        padding: 11px 14px;
+        border-radius: 14px;
+        font-size: 12px;
+    }
+}
