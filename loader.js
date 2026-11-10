@@ -120,6 +120,7 @@ function finalizeVideoComposite(canvas) {
     document.getElementById('resetBtn').disabled = false;
     document.getElementById('processBtn').disabled = false;
     window.astroState.generatedOpacity = Number(document.getElementById('startOpacity').value);
+    document.getElementById('tailRegenerateNotice').classList.add('hidden');
     document.getElementById('processBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
 }
 
@@ -217,6 +218,9 @@ document.getElementById('processBtn').addEventListener('click', async () => {
             if (window.applyPostProcessing) window.applyPostProcessing();
             document.getElementById('downloadBtn').disabled = false;
             overlay.classList.add('hidden');
+            const tailNotice = document.getElementById('tailRegenerateNotice');
+            tailNotice.classList.toggle('hidden',
+                Number(document.getElementById('startOpacity').value) === Number(previousResult.opacity));
         }
         document.getElementById('processBtn').disabled = false;
     } finally {
