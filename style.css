@@ -193,3 +193,116 @@ canvas { max-width: 100%; max-height: 85vh; object-fit: contain; display: block;
     .sidebar-content { padding: 8px; }
     .section-card { padding: 12px; }
 }
+
+
+/* Material 3 visual refresh */
+:root {
+    color-scheme: dark;
+    --bg-main: #101318;
+    --bg-sidebar: #171b22;
+    --bg-card: #202630;
+    --bg-card-hover: #293240;
+    --accent: #a8c7fa;
+    --accent-dim: rgba(168, 199, 250, .16);
+    --text-main: #e3e8f1;
+    --text-muted: #aab4c3;
+    --border-color: #343d4b;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+}
+body { background: var(--bg-main); color: var(--text-main); }
+.editor-layout { background: var(--bg-main); }
+.sidebar { background: var(--bg-sidebar); border-color: var(--border-color); }
+.sidebar-header { justify-content: flex-start; padding: 20px 24px; border-color: var(--border-color); }
+.sidebar-header h2 { font-size: 25px; font-weight: 600; letter-spacing: -.5px; }
+.app-logo-img { width: 38px; height: 38px; border-radius: 12px; }
+.logo-icon { color: var(--accent); }
+.sidebar-content { padding: 20px; gap: 14px; }
+.section-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.16);
+}
+.section-card.disabled-control { opacity: .48; }
+.section-title { color: var(--text-muted); font-size: 12px; letter-spacing: .7px; }
+.tutorial-card {
+    background: #222c3b;
+    border: 1px solid #3b4b62;
+    border-radius: var(--radius-lg);
+    padding: 16px;
+}
+.tutorial-header { color: var(--accent); font-size: 13px; }
+.tutorial-steps { color: #c0cad8; font-size: 12px; }
+#fileInfoText { font-size: 12px; color: var(--text-muted); }
+.btn {
+    min-height: 48px;
+    height: auto;
+    padding: 13px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .1px;
+    transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.btn-primary { background: #a8c7fa; color: #142033; }
+.btn-primary:hover:not(:disabled) { background: #c4d8ff; box-shadow: 0 2px 8px rgba(168,199,250,.2); }
+.btn-tonal { background: #303a49; color: #dce6f5; border: 1px solid transparent; }
+.btn-tonal:hover:not(:disabled) { background: #3a4658; border-color: transparent; }
+.btn:active:not(:disabled) { transform: scale(.985); }
+.btn:disabled { opacity: .45; }
+.btn-step { border-radius: 50%; background: #303a49; border: 0; width: 36px; height: 36px; }
+.btn-step:hover:not(:disabled) { background: #a8c7fa; color: #142033; }
+.slider-header { font-size: 13px; }
+.slider-header .val { color: var(--accent); }
+input[type="range"] { height: 6px; background: #465366; accent-color: var(--accent); }
+input[type="range"]::-webkit-slider-thumb { width: 20px; height: 20px; background: var(--accent); border: 4px solid var(--bg-card); box-shadow: none; }
+input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; background: var(--accent); border: 3px solid var(--bg-card); }
+.sidebar-footer { background: var(--bg-sidebar); border-color: var(--border-color); padding: 18px 20px; gap: 8px; }
+.viewport { background: #0c1016; }
+.canvas-container { border-radius: 16px; border: 1px solid #303947; box-shadow: 0 12px 36px rgba(0,0,0,.35); }
+.viewport-overlay { background: rgba(18,23,31,.96); }
+.status-title { font-size: 18px; font-weight: 600; }
+.status-desc { color: var(--text-muted); font-size: 14px; }
+.btn:focus-visible, input:focus-visible, .tutorial-header button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.sidebar-content::-webkit-scrollbar-thumb { background: #465366; }
+.sidebar-content::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+@media (max-width: 768px) {
+    .viewport {
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        padding: 8px 0 12px;
+        align-items: flex-start;
+        background: #0c1016;
+    }
+    .canvas-container {
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        box-shadow: none;
+        align-items: flex-start;
+    }
+    #glCanvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+        max-height: 60dvh;
+        object-fit: contain;
+    }
+    .viewport-overlay { padding: 24px 18px; }
+    .sidebar-header { padding: 16px 18px; }
+    .sidebar-content { padding: 12px; gap: 12px; }
+    .section-card { border-radius: 18px; padding: 16px; }
+    .sidebar-footer { padding: 12px; }
+}
+@media (max-width: 380px) {
+    .sidebar-content { padding: 10px; }
+    .section-card { padding: 14px; }
+}
