@@ -168,3 +168,28 @@ canvas { max-width: 100%; max-height: 85vh; object-fit: contain; display: block;
 #progressContainer {
     display: none !important;
 }
+
+
+/* Улучшенная мобильная компоновка и элементы режима фотографий */
+.photo-upload-btn { border-color: rgba(96,165,250,.35); }
+.btn:focus-visible, input:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+@media (max-width: 768px) {
+    body { overflow-x: hidden; overflow-y: auto; min-height: 100dvh; height: auto; width: 100%; }
+    .editor-layout { display: flex; flex-direction: column; min-height: 100dvh; height: auto; width: 100%; overflow: visible; }
+    .viewport { order: 0; position: relative; top: auto; height: min(48dvh, 420px); min-height: 240px; padding: 12px; flex: none; }
+    .canvas-container { width: 100%; max-height: 100%; }
+    canvas { max-width: 100%; max-height: 42dvh; }
+    .sidebar { order: 1; height: auto; min-height: 0; overflow: visible; }
+    .sidebar-header { justify-content: flex-start; padding: 12px 16px; }
+    .sidebar-header h2 { font-size: 24px; }
+    .sidebar-content { overflow: visible; padding: 12px; gap: 12px; }
+    .sidebar-footer { position: static; padding: 12px; box-shadow: none; }
+    .section-card { padding: 14px; }
+    .btn { min-height: 46px; height: auto; padding: 12px; }
+    input[type="range"] { min-height: 28px; }
+}
+@media (max-width: 380px) {
+    .viewport { min-height: 210px; height: 38dvh; }
+    .sidebar-content { padding: 8px; }
+    .section-card { padding: 12px; }
+}
