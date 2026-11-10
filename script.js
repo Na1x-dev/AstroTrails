@@ -2,7 +2,8 @@ window.astroState = {
     videoFiles: [], // Список пачки видео
     cachedFrames: [], // Кэш кадров в ОЗУ
     rawCompositeBuffer: null, 
-    previewBuffer: null       
+    previewBuffer: null,
+    generatedOpacity: null
 };
 
 const videoInput = document.getElementById('videoInput');
