@@ -73,10 +73,10 @@ startOpacityInput.addEventListener('input', (e) => {
 });
 
 resetBtn.addEventListener('click', () => {
-    startOpacityInput.value = 20; 
+    startOpacityInput.value = 20;
     opacityVal.textContent = '20%';
     if (window.resetAllEffects) window.resetAllEffects();
-    if (window.renderCompositeTracks) window.renderCompositeTracks();
+    startOpacityInput.dispatchEvent(new Event('input'));
 });
 
 ['dragenter', 'dragover'].forEach(name => { 
@@ -120,6 +120,10 @@ function handleFiles(fileList) {
     window.astroState.previewBuffer = null;
 
     window.astroState.videoFiles = filesArray;
+    window.astroState.rawCompositeBuffer = null;
+    window.astroState.previewBuffer = null;
+    downloadBtn.disabled = true;
+    processBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Сгенерировать треки';
     fileInfoText.textContent = `Загружено видео: ${filesArray.length} шт.`;
 
     secTracks.classList.remove('disabled-control');
