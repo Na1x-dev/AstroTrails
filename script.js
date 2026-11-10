@@ -174,7 +174,7 @@ window.toggleUIBlock = function(isBlocked) {
     photoProcessBtn.disabled = true;
     photoBtn.insertAdjacentElement('afterend', photoProcessBtn);
 
-    const photoState = { files: [], busy: false };
+    const photoState = { files: [], busy: false };\n    const decodePhoto = file => {\n        if (window.createImageBitmap) return window.createImageBitmap(file);\n        return new Promise((resolve, reject) => {\n            const image = new Image();\n            const url = URL.createObjectURL(file);\n            image.onload = () => { URL.revokeObjectURL(url); resolve(image); };\n            image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Не удалось прочитать изображение')); };\n            image.src = url;\n        });\n    };
     window.astroState.photoFiles = photoState.files;
 
     photoBtn.addEventListener('click', () => photoInput.click());
@@ -218,7 +218,7 @@ window.toggleUIBlock = function(isBlocked) {
             // Размер холста определяется первым доступным снимком, с защитой от чрезмерного разрешения.
             let firstBitmap = null;
             try {
-                firstBitmap = await createImageBitmap(photoState.files[0]);
+                firstBitmap = await decodePhoto(photoState.files[0]);
             } catch (_) {}
             if (!firstBitmap) throw new Error('Не удалось прочитать первую фотографию.');
             const scale = Math.min(1, maxSide / Math.max(firstBitmap.width, firstBitmap.height));
@@ -233,7 +233,7 @@ window.toggleUIBlock = function(isBlocked) {
             for (let i = 0; i < photoState.files.length; i++) {
                 let bitmap = i === 0 ? firstBitmap : null;
                 try {
-                    if (!bitmap) bitmap = await createImageBitmap(photoState.files[i]);
+                    if (!bitmap) bitmap = await decodePhoto(photoState.files[i]);
                     const ratio = Math.min(canvas.width / bitmap.width, canvas.height / bitmap.height);
                     const w = bitmap.width * ratio, h = bitmap.height * ratio;
                     const x = (canvas.width - w) / 2, y = (canvas.height - h) / 2;
