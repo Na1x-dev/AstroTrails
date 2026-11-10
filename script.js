@@ -60,18 +60,27 @@ window.enhanceSlider(startOpacityInput);
 
 startOpacityInput.addEventListener('input', (e) => {
     opacityVal.textContent = e.target.value + '%';
-    // В потоковом режиме исходные кадры не кэшируются: изменение параметра
-    // требует повторного прохода по исходным видео.
-    if (window.astroState.videoFiles.length > 0) {
-        const hasResult = !!window.astroState.rawCompositeBuffer;
-        processBtn.disabled = false;
-        if (hasResult) {
-            processBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
-            downloadBtn.disabled = true;
-            document.getElementById('statusTitle').textContent = 'Параметр изменён';
-            document.getElementById('statusText').textContent = 'Нажмите «Пересчитать треки», чтобы применить новую прозрачность.';
-            document.getElementById('statusOverlay').classList.remove('hidden');
-        }
+    if (!window.astroState.videoFiles.length) return;
+
+    processBtn.disabled = false;
+    processBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
+
+    const hasResult = !!window.astroState.rawCompositeBuffer;
+    const generatedValue = window.astroState.generatedOpacity;
+    const matchesSaved = hasResult && generatedValue !== null &&
+        Number(e.target.value) === Number(generatedValue);
+
+    if (matchesSaved) {
+        // Возврат к параметру последней генерации: моментально восстанавливаем
+        // прежнее изображение и снова разрешаем экспорт без повторной обработки.
+        if (window.applyPostProcessing) window.applyPostProcessing();
+        downloadBtn.disabled = false;
+        document.getElementById('statusOverlay').classList.add('hidden');
+    } else if (hasResult) {
+        // Не прячем и не уничтожаем предыдущий результат: он остаётся на холсте
+        // и доступен для экспорта, пока пользователь не завершит новую генерацию.
+        downloadBtn.disabled = false;
+        document.getElementById('statusOverlay').classList.add('hidden');
     }
 });
 
