@@ -63,12 +63,15 @@ startOpacityInput.addEventListener('input', (e) => {
     // В потоковом режиме исходные кадры не кэшируются: изменение параметра
     // требует повторного прохода по исходным видео.
     if (window.astroState.videoFiles.length > 0) {
+        const hasResult = !!window.astroState.rawCompositeBuffer;
         processBtn.disabled = false;
-        processBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
-        downloadBtn.disabled = true;
-        document.getElementById('statusTitle').textContent = 'Параметр изменён';
-        document.getElementById('statusText').textContent = 'Нажмите «Пересчитать треки», чтобы применить новую прозрачность.';
-        document.getElementById('statusOverlay').classList.remove('hidden');
+        if (hasResult) {
+            processBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
+            downloadBtn.disabled = true;
+            document.getElementById('statusTitle').textContent = 'Параметр изменён';
+            document.getElementById('statusText').textContent = 'Нажмите «Пересчитать треки», чтобы применить новую прозрачность.';
+            document.getElementById('statusOverlay').classList.remove('hidden');
+        }
     }
 });
 
