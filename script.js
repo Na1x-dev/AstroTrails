@@ -131,6 +131,7 @@ function handleFiles(fileList) {
     window.astroState.cachedFrames = []; 
     window.astroState.rawCompositeBuffer = null;
     window.astroState.previewBuffer = null;
+    window.astroState.generatedOpacity = null;
 
     window.astroState.videoFiles = filesArray;
     window.astroState.rawCompositeBuffer = null;
