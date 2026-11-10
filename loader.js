@@ -23,14 +23,16 @@ function waitForVideoMetadata(video, file, timeoutMs = 20000) {
     });
 }
 
-function drawTrailFrame(ctx, video, opacity, width, height) {
+function drawTrailFrame(ctx, video, opacity, width, height, addSoftPass) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighten';
     ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
     ctx.drawImage(video, 0, 0, width, height);
     // Небольшой дополнительный проход оставляет прежнее мягкое сглаживание следа.
-    ctx.globalAlpha = Math.max(0, Math.min(1, opacity * 0.4));
-    ctx.drawImage(video, -0.5, -0.5, width, height);
+    if (addSoftPass) {
+        ctx.globalAlpha = Math.max(0, Math.min(1, opacity * 0.4));
+        ctx.drawImage(video, -0.5, -0.5, width, height);
+    }
     ctx.restore();
 }
 
@@ -68,7 +70,7 @@ function playAndComposite(video, ctx, width, height, durationBefore, totalDurati
                 lastMediaTime = mediaTime;
                 const progress = Math.max(0, Math.min(1, (durationBefore + mediaTime) / Math.max(totalDuration, 0.001)));
                 const opacity = Math.pow(progress, powerCoefficient);
-                drawTrailFrame(ctx, video, opacity, width, height);
+                drawTrailFrame(ctx, video, opacity, width, height, frameCount > 0);
                 frameCount++;
             }
         };
