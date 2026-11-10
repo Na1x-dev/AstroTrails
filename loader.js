@@ -1,153 +1,222 @@
-// Пошаговое чтение пачки видеофайлов в режиме реального времени
-document.getElementById('processBtn').addEventListener('click', async () => {
-    if (!window.astroState.videoFiles || window.astroState.videoFiles.length === 0) return;
+// Потоковая обработка видео: кадры сразу накладываются на один холст.
+// В памяти не сохраняются отдельные Canvas для каждого кадра.
+let activeVideoJob = false;
 
-    if (window.toggleUIBlock) window.toggleUIBlock(true);
-    
-    const canvas = document.getElementById('glCanvas');
-    
-    // КРИТИЧЕСКИЙ ФИКС: Принудительно ПОКАЗЫВАЕМ оверлей при повторном старте
-    const overlay = document.getElementById('statusOverlay');
-    if (overlay) {
-        overlay.classList.remove('hidden');
-    }
+function waitForVideoMetadata(video, file, timeoutMs = 20000) {
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (error) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            video.removeEventListener('loadedmetadata', onReady);
+            video.removeEventListener('error', onError);
+            if (error) reject(error);
+            else resolve();
+        };
+        const onReady = () => finish();
+        const onError = () => finish(new Error('Не удалось открыть видео: ' + file.name));
+        const timer = setTimeout(() => finish(new Error('Тайм-аут при чтении видео: ' + file.name)), timeoutMs);
+        video.addEventListener('loadedmetadata', onReady, { once: true });
+        video.addEventListener('error', onError, { once: true });
+        video.load();
+    });
+}
 
-    const oldIcon = document.getElementById('statusIcon');
-    if (oldIcon) oldIcon.style.display = 'none';
-    
-    const spinner = document.getElementById('loaderSpinner');
-    if (spinner) {
-        spinner.className = 'google-spinner';
-        spinner.style.display = 'block';
-    }
+function drawTrailFrame(ctx, video, opacity, width, height) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighten';
+    ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+    ctx.drawImage(video, 0, 0, width, height);
+    // Небольшой дополнительный проход оставляет прежнее мягкое сглаживание следа.
+    ctx.globalAlpha = Math.max(0, Math.min(1, opacity * 0.4));
+    ctx.drawImage(video, -0.5, -0.5, width, height);
+    ctx.restore();
+}
 
-    // Выставляем четкие стартовые надписи
-    document.getElementById('statusTitle').textContent = 'Идет обработка видео';
-    document.getElementById('statusText').textContent = 'Пожалуйста, подождите...';
+function playAndComposite(video, ctx, width, height, durationBefore, totalDuration, powerCoefficient) {
+    return new Promise((resolve, reject) => {
+        let finished = false;
+        let callbackId = null;
+        let rafId = null;
+        let lastMediaTime = -1;
+        let frameCount = 0;
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        const timeout = setTimeout(() => finish(new Error('Обработка видео превысила допустимое время.')), Math.max(60000, (duration + 30) * 1000));
 
-    window.astroState.cachedFrames = [];
-    const files = window.astroState.videoFiles;
+        const cleanup = () => {
+            clearTimeout(timeout);
+            video.removeEventListener('ended', onEnded);
+            video.removeEventListener('error', onError);
+            if (callbackId !== null && video.cancelVideoFrameCallback) {
+                try { video.cancelVideoFrameCallback(callbackId); } catch (_) {}
+            }
+            if (rafId !== null) cancelAnimationFrame(rafId);
+        };
+        const finish = (error) => {
+            if (finished) return;
+            finished = true;
+            cleanup();
+            if (error) reject(error);
+            else resolve(frameCount);
+        };
+        const onEnded = () => finish();
+        const onError = () => finish(new Error('Ошибка декодирования видео.'));
+        const render = (mediaTime) => {
+            if (!Number.isFinite(mediaTime) || mediaTime < 0) mediaTime = video.currentTime || 0;
+            if (mediaTime > lastMediaTime + 0.0005) {
+                lastMediaTime = mediaTime;
+                const progress = Math.max(0, Math.min(1, (durationBefore + mediaTime) / Math.max(totalDuration, 0.001)));
+                const opacity = Math.pow(progress, powerCoefficient);
+                drawTrailFrame(ctx, video, opacity, width, height);
+                frameCount++;
+            }
+        };
+        const onVideoFrame = (_now, metadata) => {
+            if (finished) return;
+            render(metadata && Number.isFinite(metadata.mediaTime) ? metadata.mediaTime : video.currentTime);
+            if (!video.ended) callbackId = video.requestVideoFrameCallback(onVideoFrame);
+        };
+        const onAnimationFrame = () => {
+            if (finished) return;
+            render(video.currentTime);
+            if (!video.ended && !video.paused) rafId = requestAnimationFrame(onAnimationFrame);
+        };
 
-    for (let fIdx = 0; fIdx < files.length; fIdx++) {
-        if (files.length > 1) {
-            document.getElementById('statusTitle').textContent = `Обработка видео: клип ${fIdx + 1} из ${files.length}`;
-        }
-        
-        const video = document.createElement('video');
-        const videoUrl = URL.createObjectURL(files[fIdx]);
-        
-        video.muted = true; 
-        video.playsInline = true;
-        video.crossOrigin = "anonymous";
-        video.src = videoUrl;
+        video.addEventListener('ended', onEnded, { once: true });
+        video.addEventListener('error', onError, { once: true });
+        video.play().then(() => {
+            if (typeof video.requestVideoFrameCallback === 'function') {
+                callbackId = video.requestVideoFrameCallback(onVideoFrame);
+            } else {
+                rafId = requestAnimationFrame(onAnimationFrame);
+            }
+        }).catch(error => finish(new Error('Браузер не смог запустить видео: ' + error.message)));
+    });
+}
 
-        await new Promise((resolve) => {
-            video.oncanplaythrough = resolve;
-            video.load();
-        });
-
-        if (fIdx === 0) {
-            canvas.width = video.videoWidth || 1920;
-            canvas.height = video.videoHeight || 1080;
-        }
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width; 
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-
-        await video.play().catch((error) => { throw new Error('Браузер не смог запустить декодирование видео: ' + error.message); });
-
-        await new Promise((resolve) => {
-            const trackInterval = setInterval(async () => {
-                if (video.paused || video.ended) {
-                    clearInterval(trackInterval);
-                    resolve();
-                    return;
-                }
-
-                tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                const frameCopy = document.createElement('canvas');
-                frameCopy.width = canvas.width;
-                frameCopy.height = canvas.height;
-                frameCopy.getContext('2d').drawImage(tempCanvas, 0, 0);
-                
-                window.astroState.cachedFrames.push(frameCopy);
-            }, 40); 
-            
-            video.onended = () => {
-                clearInterval(trackInterval);
-                resolve();
-            };
-        });
-
-        URL.revokeObjectURL(videoUrl);
-    }
-
-    if (window.renderCompositeTracks) {
-        window.renderCompositeTracks();
-    }
-});
-
-// Алгоритм наложения сглаживания треков (Интеллектуальный Gap Filling)
-window.renderCompositeTracks = function() {
-    if (!window.astroState.cachedFrames || window.astroState.cachedFrames.length === 0) return;
-
-    const canvas = document.getElementById('glCanvas');
-    const ctx = canvas.getContext('2d');
-    const startOpacityInput = document.getElementById('startOpacity');
-
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const total = window.astroState.cachedFrames.length;
-    const sliderVal = parseFloat(startOpacityInput.value);
-    const powerCoefficient = Math.pow(1.06, sliderVal) - 0.9;
-
-    for (let i = 0; i < total; i++) {
-        const progress = i / (total - 1 || 1);
-        const opacity = Math.pow(progress, powerCoefficient);
-
-        ctx.save();
-        ctx.globalAlpha = opacity;
-        ctx.globalCompositeOperation = 'lighten';
-        
-        ctx.drawImage(window.astroState.cachedFrames[i], 0, 0);
-        
-        if (i > 0) {
-            ctx.globalAlpha = opacity * 0.4;
-            ctx.drawImage(window.astroState.cachedFrames[i], -0.5, -0.5); 
-        }
-        ctx.restore();
-    }
-
+function finalizeVideoComposite(canvas) {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     window.astroState.rawCompositeBuffer = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     const previewWidth = Math.min(canvas.width, 1024);
-    const previewHeight = (canvas.height / canvas.width) * previewWidth;
-    const pCanvas = document.createElement('canvas');
-    pCanvas.width = previewWidth; 
-    pCanvas.height = previewHeight;
-    pCanvas.getContext('2d').drawImage(canvas, 0, 0, previewWidth, previewHeight);
-    window.astroState.previewBuffer = pCanvas.getContext('2d').getImageData(0, 0, previewWidth, previewHeight);
+    const previewHeight = Math.max(1, Math.round(canvas.height * previewWidth / canvas.width));
+    const previewCanvas = document.createElement('canvas');
+    previewCanvas.width = previewWidth;
+    previewCanvas.height = previewHeight;
+    previewCanvas.getContext('2d').drawImage(canvas, 0, 0, previewWidth, previewHeight);
+    window.astroState.previewBuffer = previewCanvas.getContext('2d', { willReadFrequently: true })
+        .getImageData(0, 0, previewWidth, previewHeight);
 
-    if (window.applyPostProcessing) {
-        window.applyPostProcessing();
-    }
-
-    // Рендер закончен — чисто и надежно убираем экран загрузки
+    if (window.applyPostProcessing) window.applyPostProcessing();
     document.getElementById('statusOverlay').classList.add('hidden');
     document.getElementById('loaderSpinner').style.display = 'none';
-    
     if (window.toggleUIBlock) window.toggleUIBlock(false);
     document.getElementById('secEffects').classList.remove('disabled-control');
     if (window.toggleFiltersState) window.toggleFiltersState(false);
     document.getElementById('downloadBtn').disabled = false;
     document.getElementById('resetBtn').disabled = false;
-    
-    // Блокируем кнопку до выбора новых файлов
-    document.getElementById('processBtn').disabled = true; 
+    document.getElementById('processBtn').disabled = false;
+    document.getElementById('processBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Пересчитать треки';
+}
+
+document.getElementById('processBtn').addEventListener('click', async () => {
+    const files = (window.astroState && window.astroState.videoFiles) || [];
+    if (!files.length || activeVideoJob) return;
+    activeVideoJob = true;
+    if (window.toggleUIBlock) window.toggleUIBlock(true);
+
+    const canvas = document.getElementById('glCanvas');
+    const overlay = document.getElementById('statusOverlay');
+    const title = document.getElementById('statusTitle');
+    const message = document.getElementById('statusText');
+    const spinner = document.getElementById('loaderSpinner');
+    overlay.classList.remove('hidden');
+    document.getElementById('statusIcon').style.display = 'none';
+    spinner.className = 'google-spinner';
+    spinner.style.display = 'block';
+    title.textContent = 'Подготовка видео';
+    message.textContent = 'Проверяем длительность и параметры клипов…';
+
+    window.astroState.cachedFrames = [];
+    window.astroState.rawCompositeBuffer = null;
+    window.astroState.previewBuffer = null;
+    const videos = [];
+    const urls = [];
+    try {
+        let totalDuration = 0;
+        // Сначала читаем только метаданные. Декодируется в каждый момент лишь один клип.
+        for (let i = 0; i < files.length; i++) {
+            title.textContent = 'Подготовка клипа ' + (i + 1) + ' из ' + files.length;
+            const video = document.createElement('video');
+            const url = URL.createObjectURL(files[i]);
+            videos.push(video);
+            urls.push(url);
+            video.muted = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+            video.src = url;
+            await waitForVideoMetadata(video, files[i]);
+            if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration) || video.duration <= 0) {
+                throw new Error('У видео нет корректных размеров или длительности: ' + files[i].name);
+            }
+            totalDuration += video.duration;
+        }
+
+        const first = videos[0];
+        const maxSide = window.matchMedia('(max-width: 768px)').matches ? 1440 : 2048;
+        const scale = Math.min(1, maxSide / Math.max(first.videoWidth, first.videoHeight));
+        canvas.width = Math.max(1, Math.round(first.videoWidth * scale));
+        canvas.height = Math.max(1, Math.round(first.videoHeight * scale));
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const sliderValue = Number(document.getElementById('startOpacity').value);
+        const powerCoefficient = Math.max(0.05, Math.pow(1.06, sliderValue) - 0.9);
+        let durationBefore = 0;
+        for (let i = 0; i < videos.length; i++) {
+            const video = videos[i];
+            title.textContent = 'Обработка видео: клип ' + (i + 1) + ' из ' + videos.length;
+            message.textContent = 'Кадры сразу накладываются на итоговый холст — без накопления в памяти.';
+            // Для повторного клипа сбрасываем позицию после чтения метаданных.
+            video.currentTime = 0;
+            await new Promise((resolve, reject) => {
+                if (video.readyState >= 2) return resolve();
+                const timer = setTimeout(() => reject(new Error('Не удалось подготовить кадры: ' + files[i].name)), 20000);
+                video.addEventListener('loadeddata', () => { clearTimeout(timer); resolve(); }, { once: true });
+                video.addEventListener('error', () => { clearTimeout(timer); reject(new Error('Ошибка чтения кадров: ' + files[i].name)); }, { once: true });
+            });
+            await playAndComposite(video, ctx, canvas.width, canvas.height, durationBefore, totalDuration, powerCoefficient);
+            durationBefore += video.duration;
+            video.pause();
+        }
+
+        finalizeVideoComposite(canvas);
+        title.textContent = 'Обработка завершена';
+        message.textContent = 'Световые следы созданы. При изменении прозрачности нажмите «Пересчитать треки».';
+    } catch (error) {
+        title.textContent = 'Не удалось обработать видео';
+        message.textContent = error.message || 'Произошла ошибка при чтении видео.';
+        document.getElementById('statusIcon').style.display = '';
+        document.getElementById('statusIcon').className = 'fa-solid fa-circle-exclamation overlay-icon';
+        spinner.style.display = 'none';
+        overlay.classList.remove('hidden');
+        if (window.toggleUIBlock) window.toggleUIBlock(false);
+        document.getElementById('processBtn').disabled = false;
+    } finally {
+        videos.forEach(video => {
+            try { video.pause(); video.removeAttribute('src'); video.load(); } catch (_) {}
+        });
+        urls.forEach(url => URL.revokeObjectURL(url));
+        activeVideoJob = false;
+    }
+});
+
+// Финализация также оставлена глобальной для совместимости со старым интерфейсом.
+window.renderCompositeTracks = function() {
+    // Кадры намеренно больше не хранятся; повторная обработка запускается кнопкой.
+    return false;
 };
 
 // Корректное объединение клипов: декодирование и повторная запись в единый WebM.
