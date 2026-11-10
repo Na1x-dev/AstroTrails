@@ -293,7 +293,7 @@ input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; background: v
         width: 100%;
         height: auto;
         max-width: 100%;
-        max-height: 60dvh;
+        max-height: none;
         object-fit: contain;
     }
     .viewport-overlay { padding: 24px 18px; }
